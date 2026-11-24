@@ -1,0 +1,42 @@
+name: Exercise deployment controls
+
+on:
+  workflow_dispatch:
+    inputs:
+      scenario:
+        description: Release Watcher control case
+        required: true
+        type: choice
+        options:
+          - selected-environment-failure
+          - preview-environment-success
+
+permissions:
+  contents: read
+
+jobs:
+  failed-pages-deployment:
+    if: github.ref == 'refs/heads/main' && inputs.scenario == 'selected-environment-failure'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: github-pages
+    steps:
+      - name: Fail the release preflight
+        run: |
+          echo "::error::Expected failure before a change to the live test site."
+          exit 1
+
+  preview-deployment:
+    if: github.ref == 'refs/heads/main' && inputs.scenario == 'preview-environment-success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: release-watcher-preview
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/upload-artifact@v6
+        with:
+          name: release-watcher-preview
+          path: site
+          retention-days: 1
